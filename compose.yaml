@@ -1,7 +1,8 @@
 services:
   astrodash:
     image: ghcr.io/jbolm/astrodash:master
-    build: .  # Only used with: docker compose up -d --build
+    # Uncomment to build from source instead of pulling the image:
+    # build: .
     container_name: astrodash
     ports:
       - "9090:9090"
