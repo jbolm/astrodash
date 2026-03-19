@@ -23,7 +23,8 @@ Self-hosted dashboard for astrophotography session planning. Uses Astrospheric w
 ## Quick Start
 
 ```bash
-# Clone or extract
+# Clone the repository
+git clone https://github.com/jbolm/astrodash.git
 cd astrodash
 
 # Build and run
@@ -40,6 +41,14 @@ The first-run setup wizard will walk you through:
 4. Target preferences
 5. Equipment selection from catalog
 6. Notification setup (optional)
+
+## Updating
+
+```bash
+cd astrodash
+git pull
+docker compose up -d --build
+```
 
 ## Architecture
 
@@ -69,6 +78,7 @@ Each equipment category includes detailed specifications displayed in the select
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/api/version` | GET | App version |
 | `/api/settings` | GET/PUT | User settings |
 | `/api/forecast` | GET | Tonight's forecast with scores |
 | `/api/forecast/refresh` | POST | Force immediate refresh |
@@ -148,7 +158,7 @@ The notification scheduler checks every 10 minutes (lightweight time comparison,
 
 ## Data Persistence
 
-All data is stored in `data/astrodash.db` (SQLite). The Docker Compose file maps this to a bind mount at `./data/`. To back up the raw database:
+All data is stored in `data/astrodash.db` (SQLite). The `compose.yaml` maps this to a bind mount at `./data/`. To back up the raw database:
 
 ```bash
 docker cp astrodash:/app/data/astrodash.db ./backup.db

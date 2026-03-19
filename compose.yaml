@@ -1,13 +1,14 @@
 services:
   astrodash:
     build: .
+    image: ghcr.io/jbolm/astrodash:latest
     container_name: astrodash
     ports:
       - "9090:9090"
     volumes:
       # Persistent data directory — change the left side to wherever you want
       # AstroDash to store its database on your host machine.
-      # Default: ./data (a "data" folder next to this docker-compose.yml)
+      # Default: ./data (a "data" folder next to this compose.yaml)
       - ./data:/app/data
     restart: unless-stopped
     dns:

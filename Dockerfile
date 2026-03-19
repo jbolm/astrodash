@@ -1,5 +1,8 @@
 FROM python:3.12-slim
 
+LABEL org.opencontainers.image.source=https://github.com/jbolm/astrodash
+LABEL org.opencontainers.image.description="AstroDash — Astrophotography Imaging Dashboard"
+
 WORKDIR /app
 
 # Install system dependencies
