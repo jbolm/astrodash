@@ -1780,4 +1780,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showTab('dashboard');
     loadDashboard();
     setInterval(loadDashboard, 300000);
+    fetch('/api/version').then(r=>r.json()).then(d=>{
+        const el = document.getElementById('app-version');
+        if (el) el.textContent = 'v' + d.version;
+    }).catch(()=>{});
 });

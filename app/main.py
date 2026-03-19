@@ -512,7 +512,8 @@ async def lifespan(app: FastAPI):
     logger.info("Scheduler stopped")
 
 
-app = FastAPI(title="AstroDash", version="1.0.0", lifespan=lifespan)
+APP_VERSION = "0.1.0"
+app = FastAPI(title="AstroDash", version=APP_VERSION, lifespan=lifespan)
 
 # Static files and templates
 BASE_DIR = Path(__file__).parent
@@ -529,6 +530,11 @@ def get_db():
 async def get_status():
     """Return initialization status for startup progress display."""
     return _init_status
+
+
+@app.get("/api/version")
+async def get_version():
+    return {"version": APP_VERSION}
 
 
 # ═══════════════════════════════════════════════════════════════
