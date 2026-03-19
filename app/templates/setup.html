@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroDash — Setup</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <h1>🔭 AstroDash</h1>
+            <p class="subtitle">Astrophotography Imaging Dashboard</p>
+        </div>
+
+        <div class="setup-progress" id="setup-progress" style="display:none">
+            <div class="step active" data-step="1">Location</div>
+            <div class="step" data-step="2">API Key</div>
+            <div class="step" data-step="3">Horizon</div>
+            <div class="step" data-step="4">Preferences</div>
+            <div class="step" data-step="5">Equipment</div>
+            <div class="step" data-step="6">Notifications</div>
+        </div>
+
+        <!-- Step 0: Restore from Backup -->
+        <div class="setup-step active" id="step-0">
+            <h2>Welcome to AstroDash!</h2>
+            <p>Would you like to restore from an existing backup?</p>
+            <p style="font-size:0.85rem;color:var(--text-secondary)">If you've used AstroDash before and have a backup file, you can restore all your settings, equipment, projects, and sessions now.</p>
+            <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1.5rem;max-width:360px">
+                <button class="btn-primary" onclick="document.getElementById('setup-restore-input').click()">📂 Restore from Backup</button>
+                <input type="file" id="setup-restore-input" accept=".json" style="display:none" onchange="setupRestore(this)" />
+                <span id="setup-restore-status" style="font-size:0.85rem;min-height:1.2em"></span>
+                <button class="btn-sm" onclick="skipRestore()" style="align-self:flex-start">Start Fresh →</button>
+            </div>
+        </div>
+
+        <!-- Step 1: Location -->
+        <div class="setup-step" id="step-1">
+            <h2>Where do you image from?</h2>
+            <p>This determines target visibility, twilight times, and weather forecasts.</p>
+            <div class="form-group">
+                <label for="location_name">Location Name</label>
+                <input type="text" id="location_name" placeholder="e.g. Backyard Observatory" />
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="number" id="latitude" step="0.01" placeholder="38.88" />
+                </div>
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="number" id="longitude" step="0.01" placeholder="-99.33" />
+                </div>
+            </div>
+            <button class="btn-detect" onclick="detectLocation()">📍 Detect My Location</button>
+            <div class="form-group">
+                <label for="bortle_zone">Bortle Zone (1=darkest, 9=city center)</label>
+                <input type="range" id="bortle_zone" min="1" max="9" value="5" oninput="this.nextElementSibling.textContent='Bortle '+this.value" />
+                <span class="range-value">Bortle 5</span>
+            </div>
+            <div class="form-group">
+                <label for="timezone">Timezone</label>
+                <select id="timezone">
+                    <option value="America/New_York">Eastern (ET)</option>
+                    <option value="America/Chicago">Central (CT)</option>
+                    <option value="America/Denver" selected>Mountain (MT)</option>
+                    <option value="America/Los_Angeles">Pacific (PT)</option>
+                    <option value="America/Phoenix">Arizona (no DST)</option>
+                    <option value="America/Anchorage">Alaska</option>
+                    <option value="Pacific/Honolulu">Hawaii</option>
+                </select>
+            </div>
+            <div class="step-nav">
+                <span></span>
+                <button class="btn-next" onclick="nextStep(2)">Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 2: API Key -->
+        <div class="setup-step" id="step-2">
+            <h2>Astrospheric API Key</h2>
+            <p>Required for weather forecasts. Get your key from
+                <a href="https://www.astrospheric.com" target="_blank">Astrospheric Pro</a>
+                → My Profile → Private API Key.</p>
+            <div class="form-group">
+                <label for="api_key">API Key</label>
+                <input type="password" id="api_key" placeholder="Paste your Astrospheric Pro API key" />
+            </div>
+            <div class="info-box">
+                <strong>API Budget:</strong> 100 credits/day. AstroDash uses ~72 credits/day
+                (polls every 2 hours: 5 credits for forecast + 1 for moon data).
+            </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="nextStep(1)">← Back</button>
+                <button class="btn-next" onclick="nextStep(3)">Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Horizon -->
+        <div class="setup-step" id="step-3">
+            <h2>Horizon Limits</h2>
+            <p>Set the minimum altitude (in degrees) you can image above in each direction.
+               Trees, buildings, or mountains blocking your view? Set those directions higher.</p>
+            <div class="horizon-grid">
+                <div class="horizon-direction">
+                    <label>North</label>
+                    <input type="number" id="horizon_north" min="0" max="90" value="30" />
+                    <span>°</span>
+                </div>
+                <div class="horizon-direction">
+                    <label>East</label>
+                    <input type="number" id="horizon_east" min="0" max="90" value="15" />
+                    <span>°</span>
+                </div>
+                <div class="horizon-direction">
+                    <label>South</label>
+                    <input type="number" id="horizon_south" min="0" max="90" value="15" />
+                    <span>°</span>
+                </div>
+                <div class="horizon-direction">
+                    <label>West</label>
+                    <input type="number" id="horizon_west" min="0" max="90" value="15" />
+                    <span>°</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="imaging_end_hour">Stop imaging at (local time)</label>
+                <select id="imaging_end_hour">
+                    <option value="0">Midnight</option>
+                    <option value="1" selected>1:00 AM</option>
+                    <option value="2">2:00 AM</option>
+                    <option value="3">3:00 AM</option>
+                    <option value="4">4:00 AM</option>
+                </select>
+            </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="nextStep(2)">← Back</button>
+                <button class="btn-next" onclick="nextStep(4)">Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Target Preferences -->
+        <div class="setup-step" id="step-4">
+            <h2>What do you like to image?</h2>
+            <p>Select your preferred target types. This helps prioritize recommendations.</p>
+            <div class="checkbox-grid">
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Emission Nebula" checked />
+                    <span>🌫️ Emission Nebulae</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Planetary Nebula" />
+                    <span>🔵 Planetary Nebulae</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Reflection Nebula" />
+                    <span>💎 Reflection Nebulae</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Supernova Remnant" checked />
+                    <span>💥 Supernova Remnants</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Spiral Galaxy" checked />
+                    <span>🌀 Spiral Galaxies</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Galaxy Group" checked />
+                    <span>🌌 Galaxy Groups</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Globular Cluster" />
+                    <span>⭐ Globular Clusters</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Open Cluster" />
+                    <span>✨ Open Clusters</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Dark Nebula" />
+                    <span>🌑 Dark Nebulae</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Planet" />
+                    <span>🪐 Planets</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Moon" />
+                    <span>🌙 Moon</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" value="Sun" />
+                    <span>☀️ Sun</span>
+                </label>
+            </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="nextStep(3)">← Back</button>
+                <button class="btn-next" onclick="nextStep(5)">Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 5: Equipment -->
+        <div class="setup-step" id="step-5">
+            <h2>Your Equipment</h2>
+            <p>Select your gear from the catalog. You can always edit this later.</p>
+            <div class="equipment-selectors">
+                <div class="equip-section">
+                    <h3>Mount</h3>
+                    <select id="equip_mount" class="equip-select"><option value="">Loading...</option></select>
+                </div>
+                <div class="equip-section">
+                    <h3>Telescope / Lens</h3>
+                    <select id="equip_telescope" class="equip-select"><option value="">Loading...</option></select>
+                </div>
+                <div class="equip-section">
+                    <h3>Camera</h3>
+                    <select id="equip_camera" class="equip-select"><option value="">Loading...</option></select>
+                </div>
+                <div class="equip-section">
+                    <h3>Primary Filter</h3>
+                    <select id="equip_filter" class="equip-select"><option value="">Loading...</option></select>
+                </div>
+                <div class="equip-section">
+                    <h3>Guide Scope</h3>
+                    <select id="equip_guide_scope" class="equip-select"><option value="">Loading...</option></select>
+                </div>
+                <div class="equip-section">
+                    <h3>Guide Camera</h3>
+                    <select id="equip_guide_camera" class="equip-select"><option value="">Loading...</option></select>
+                </div>
+            </div>
+            <p class="hint">Don't see your gear? You can add custom equipment after setup.</p>
+            <div class="step-nav">
+                <button class="btn-back" onclick="nextStep(4)">← Back</button>
+                <button class="btn-next" onclick="nextStep(6)">Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 6: Notifications -->
+        <div class="setup-step" id="step-6">
+            <h2>Notifications (Optional)</h2>
+            <p>Get alerted when conditions are good for imaging.</p>
+            <div class="form-group">
+                <label class="toggle-label">
+                    <input type="checkbox" id="notify_enabled" />
+                    <span>Enable notifications</span>
+                </label>
+            </div>
+            <div id="notify-options" style="display:none;">
+                <div class="form-group">
+                    <label>Method</label>
+                    <select id="notify_method" onchange="updateSetupNotifyUI()">
+                        <option value="ntfy">ntfy</option>
+                        <option value="discord">Discord Webhook</option>
+                        <option value="webhook">Generic Webhook</option>
+                    </select>
+                </div>
+                <div id="ntfy-config">
+                    <div class="form-group">
+                        <label for="ntfy_server">ntfy Server</label>
+                        <input type="text" id="ntfy_server" value="https://ntfy.sh" />
+                    </div>
+                    <div class="form-group">
+                        <label for="ntfy_topic">ntfy Topic</label>
+                        <input type="text" id="ntfy_topic" placeholder="astrodash-alerts" />
+                    </div>
+                </div>
+                <div id="discord-config" style="display:none;">
+                    <div class="form-group">
+                        <label for="discord_url">Discord Webhook URL</label>
+                        <input type="text" id="discord_url" placeholder="https://discord.com/api/webhooks/..." />
+                    </div>
+                </div>
+                <div id="webhook-config" style="display:none;">
+                    <div class="form-group">
+                        <label for="webhook_url">Generic Webhook URL</label>
+                        <input type="text" id="webhook_url" placeholder="https://..." />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notify_threshold">Alert when score ≥</label>
+                    <input type="range" id="notify_threshold" min="30" max="90" value="70" step="5"
+                           oninput="this.nextElementSibling.textContent=this.value+'%'" />
+                    <span class="range-value">70%</span>
+                </div>
+            </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="nextStep(5)">← Back</button>
+                <button class="btn-finish" onclick="finishSetup()">🚀 Launch AstroDash</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let currentStep = 0;
+
+    function skipRestore() {
+        document.getElementById('step-0').classList.remove('active');
+        document.getElementById('step-1').classList.add('active');
+        document.getElementById('setup-progress').style.display = '';
+        document.querySelectorAll('.setup-progress .step')[0].classList.add('active');
+        currentStep = 1;
+    }
+
+    async function setupRestore(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const status = document.getElementById('setup-restore-status');
+        status.textContent = 'Restoring…';
+        status.style.color = 'var(--text-secondary)';
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const resp = await fetch('/api/restore', { method: 'POST', body: form });
+            const data = await resp.json();
+            if (resp.ok) {
+                status.textContent = '✓ Restored! ' + (data.projects || 0) + ' projects, ' + (data.sessions || 0) + ' sessions. Launching…';
+                status.style.color = 'var(--go)';
+                setTimeout(() => { window.location.href = '/'; }, 1500);
+            } else {
+                status.textContent = '✗ ' + (data.detail || 'Restore failed. Check the file and try again.');
+                status.style.color = 'var(--nogo)';
+            }
+        } catch (e) {
+            status.textContent = '✗ Error: ' + e.message;
+            status.style.color = 'var(--nogo)';
+        }
+        input.value = '';
+    }
+
+    function nextStep(step) {
+        // Validate before leaving current step
+        if (currentStep === 1 && step > 1) {
+            const lat = document.getElementById('latitude').value;
+            const lon = document.getElementById('longitude').value;
+            if (!lat || !lon || isNaN(parseFloat(lat)) || isNaN(parseFloat(lon))) {
+                alert('Please enter your latitude and longitude. These are required for target visibility and weather forecasts.');
+                return;
+            }
+        }
+        if (currentStep === 2 && step > 2) {
+            const key = document.getElementById('api_key').value.trim();
+            if (!key) {
+                if (!confirm('No API key entered. Forecast data will not be available until you add one in Settings.\n\nContinue anyway?')) {
+                    return;
+                }
+            }
+        }
+
+        // Show progress bar once past step 0
+        document.getElementById('setup-progress').style.display = '';
+
+        document.querySelectorAll('.setup-step').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.setup-progress .step').forEach(el => el.classList.remove('active'));
+        document.getElementById('step-' + step).classList.add('active');
+        document.querySelectorAll('.setup-progress .step').forEach(el => {
+            if (parseInt(el.dataset.step) <= step) el.classList.add('active');
+        });
+        currentStep = step;
+
+        // Load equipment catalogs when reaching step 5
+        if (step === 5) loadEquipmentCatalogs();
+    }
+
+    function detectLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                document.getElementById('latitude').value = pos.coords.latitude.toFixed(4);
+                document.getElementById('longitude').value = pos.coords.longitude.toFixed(4);
+            }, () => alert('Location detection failed. Please enter manually.'));
+        }
+    }
+
+    async function loadEquipmentCatalogs() {
+        for (const [cat, selectId] of [
+            ['mounts', 'equip_mount'],
+            ['telescopes', 'equip_telescope'],
+            ['cameras', 'equip_camera'],
+            ['filters', 'equip_filter'],
+            ['accessories', 'equip_guide_scope'],
+            ['cameras', 'equip_guide_camera']
+        ]) {
+            try {
+                const resp = await fetch('/api/equipment/' + cat);
+                const items = await resp.json();
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">— None —</option>';
+                // For guide scope, filter to guide scopes only
+                let filtered = items;
+                if (selectId === 'equip_guide_scope') {
+                    filtered = items.filter(i =>
+                        (i.accessory_type && i.accessory_type === 'Guide Scope') ||
+                        (i.name && i.name.toLowerCase().includes('guide'))
+                    );
+                    if (filtered.length === 0) filtered = items; // fallback
+                }
+                // For guide camera, show all cameras (user picks their guide cam)
+                // Group by manufacturer
+                const grouped = {};
+                filtered.forEach(item => {
+                    if (!grouped[item.manufacturer]) grouped[item.manufacturer] = [];
+                    grouped[item.manufacturer].push(item);
+                });
+                for (const [mfr, products] of Object.entries(grouped).sort()) {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = mfr;
+                    products.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.name;
+                        optgroup.appendChild(opt);
+                    });
+                    select.appendChild(optgroup);
+                }
+            } catch (e) {
+                console.error('Failed to load', cat, e);
+            }
+        }
+    }
+
+    // Toggle notification options
+    document.getElementById('notify_enabled').addEventListener('change', function() {
+        document.getElementById('notify-options').style.display = this.checked ? '' : 'none';
+    });
+    function updateSetupNotifyUI() {
+        const method = document.getElementById('notify_method').value;
+        document.getElementById('ntfy-config').style.display = method === 'ntfy' ? '' : 'none';
+        document.getElementById('discord-config').style.display = method === 'discord' ? '' : 'none';
+        document.getElementById('webhook-config').style.display = method === 'webhook' ? '' : 'none';
+    }
+
+    async function finishSetup() {
+        // Final validation
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lon = parseFloat(document.getElementById('longitude').value);
+        if (!lat || !lon || isNaN(lat) || isNaN(lon)) {
+            alert('Location is required. Please go back to Step 1 and enter your latitude and longitude.');
+            nextStep(1);
+            return;
+        }
+
+        // Gather all data
+        const prefs = [];
+        document.querySelectorAll('#step-4 input[type=checkbox]:checked').forEach(cb => {
+            prefs.push(cb.value);
+        });
+
+        const settings = {
+            location_name: document.getElementById('location_name').value,
+            latitude: parseFloat(document.getElementById('latitude').value),
+            longitude: parseFloat(document.getElementById('longitude').value),
+            timezone: document.getElementById('timezone').value,
+            bortle_zone: parseInt(document.getElementById('bortle_zone').value),
+            astrospheric_api_key: document.getElementById('api_key').value,
+            horizon_north: parseInt(document.getElementById('horizon_north').value),
+            horizon_east: parseInt(document.getElementById('horizon_east').value),
+            horizon_south: parseInt(document.getElementById('horizon_south').value),
+            horizon_west: parseInt(document.getElementById('horizon_west').value),
+            imaging_end_hour: parseInt(document.getElementById('imaging_end_hour').value),
+            preferred_targets: prefs,
+            notify_enabled: document.getElementById('notify_enabled').checked,
+            notify_method: document.getElementById('notify_method').value,
+            notify_ntfy_server: document.getElementById('ntfy_server').value,
+            notify_ntfy_topic: document.getElementById('ntfy_topic').value,
+            notify_discord_url: document.getElementById('discord_url').value,
+            notify_webhook_url: document.getElementById('webhook_url').value,
+            notify_go_threshold: parseInt(document.getElementById('notify_threshold').value),
+            setup_complete: true,
+        };
+
+        // Save settings
+        await fetch('/api/settings', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(settings)
+        });
+
+        // Purge old equipment selections before saving new ones
+        await fetch('/api/my-equipment/all', { method: 'DELETE' });
+
+        // Save equipment selections
+        const equipMap = {
+            'equip_mount': 'mounts',
+            'equip_telescope': 'telescopes',
+            'equip_camera': 'cameras',
+            'equip_filter': 'filters',
+            'equip_guide_scope': 'accessories',
+            'equip_guide_camera': 'cameras',
+        };
+        for (const [selectId, category] of Object.entries(equipMap)) {
+            const val = document.getElementById(selectId).value;
+            if (val) {
+                await fetch('/api/my-equipment', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        category: category,
+                        catalog_id: parseInt(val),
+                        is_primary: true,
+                    })
+                });
+            }
+        }
+
+        window.location.href = '/';
+    }
+    </script>
+</body>
+</html>

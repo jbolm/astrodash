@@ -1,0 +1,21 @@
+services:
+  astrodash:
+    build: .
+    container_name: astrodash
+    ports:
+      - "9090:9090"
+    volumes:
+      # Persistent data directory — change the left side to wherever you want
+      # AstroDash to store its database on your host machine.
+      # Default: ./data (a "data" folder next to this docker-compose.yml)
+      - ./data:/app/data
+    restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    # Uncomment the line below if DNS resolution fails inside the container.
+    # This gives the container full access to the host network stack.
+    # If using network_mode: host, the "ports" mapping is ignored (9090 is exposed directly).
+    # network_mode: host
+    environment:
+      - ASTRODASH_DB=data/astrodash.db
